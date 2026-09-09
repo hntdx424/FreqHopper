@@ -82,8 +82,8 @@ class AudioPlayer:
     def mute(self) -> None:
         with self._lock:
             self._open = False
+            self._leftover = np.zeros(0, dtype=np.float32)
         self._drain()
-        self._leftover = np.zeros(0, dtype=np.float32)
 
     @property
     def squelch_open(self) -> bool:
@@ -123,13 +123,15 @@ class AudioPlayer:
     def _callback(self, outdata, frames, _time_info, _status) -> None:
         with self._lock:
             opened = self._open
+            leftover = self._leftover
+            if not opened:
+                self._leftover = np.zeros(0, dtype=np.float32)
         if not opened:
             outdata.fill(0)
             return
 
         out = np.zeros(frames, dtype=np.float32)
         n = 0
-        leftover = self._leftover
         if leftover.size:
             take = min(leftover.size, frames)
             out[:take] = leftover[:take]
@@ -151,7 +153,11 @@ class AudioPlayer:
                 n = frames
                 break
 
-        self._leftover = leftover
+        with self._lock:
+            if self._open:
+                self._leftover = leftover
+            else:
+                self._leftover = np.zeros(0, dtype=np.float32)
         outdata[:, 0] = out
 
     def _notify(self) -> None:

@@ -20,6 +20,7 @@ from freqhopper.defaults import (
     DEFAULT_PPM,
     DEFAULT_SAMPLE_RATE,
     DEFAULT_SQUELCH_DB,
+    DEFAULT_VOLUME,
     FLUSH_SAMPLES,
     LOCK_SAMPLES,
     SCAN_SAMPLES,

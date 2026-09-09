@@ -38,3 +38,13 @@ def test_nbfm_demod_produces_audio():
     freqs = np.fft.rfftfreq(audio.size, 1 / 48_000)
     peak = freqs[int(np.argmax(spec[1:]) + 1)]
     assert 600 < peak < 1600
+
+
+def test_am_demod_produces_audio():
+    fs = 1.2e6
+    t = np.arange(32_768) / fs
+    carrier = np.exp(1j * 2 * np.pi * 1000 * t)
+    iq = ((1.0 + 0.5 * np.sin(2 * np.pi * 800 * t)) * carrier).astype(np.complex64)
+    audio = Demodulator(fs, mode="am").process(iq)
+    assert audio.size > 100
+    assert np.max(np.abs(audio)) > 0.05
