@@ -1,0 +1,37 @@
+"""First-run defaults chosen so the UI is immediately understandable."""
+
+# 2 m amateur band is a common RTL-SDR scan target.
+DEFAULT_START_MHZ = 144.000
+DEFAULT_END_MHZ = 148.000
+DEFAULT_STEP_KHZ = 15.0
+
+DEFAULT_LIST_MHZ = [
+    146.520,  # 2 m national calling
+    146.760,
+    162.400,  # NOAA weather (US)
+    162.550,
+]
+
+DEFAULT_SQUELCH_DB = -35.0
+SQUELCH_MIN_DB = -90.0
+SQUELCH_MAX_DB = 0.0
+DEFAULT_HYSTERESIS_DB = 4.0
+
+DEFAULT_DWELL_MS = 80
+DEFAULT_HANG_MS = 750
+
+DEFAULT_SAMPLE_RATE = 1.2e6
+AUDIO_SAMPLE_RATE = 48_000
+SCAN_SAMPLES = 16_384
+LOCK_SAMPLES = 65_536
+FLUSH_SAMPLES = 4_096
+
+DEFAULT_VOLUME = 0.80
+DEFAULT_GAIN = "auto"
+DEFAULT_MODULATION = "nbfm"
+DEFAULT_PPM = 0
+DEFAULT_DEVICE_INDEX = 0
+
+# IQ power is typically in this window for 8-bit RTL-SDR samples.
+METER_MIN_DB = -90.0
+METER_MAX_DB = 0.0
