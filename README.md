@@ -14,9 +14,94 @@ It is meant to feel like a conventional radio scanner: dwell on a channel, break
 
 Primary demodulation is **NBFM** (narrow FM). WBFM and AM are included. See [Extending demodulation](#extending-demodulation) to add more modes.
 
+## If your clone looks empty
+
+The full app lives in the `freqhopper\` folder. Pull request [#1](https://github.com/hntdx424/FreqHopper/pull/1) is already merged into `main`, so a **fresh clone of `main` includes the app**.
+
+If you cloned **before** that merge, you may only have a one-line README and no `freqhopper\` folder. Update your copy in PowerShell from the repo folder:
+
+```powershell
+git checkout main
+git pull origin main
+```
+
+You should then see `freqhopper\`, `requirements.txt`, and `run_freqhopper.bat`. (The older working branch `cursor/rtl-sdr-scanner-squelch-142e` also has the app if you still have it checked out.)
+
+## First-time Windows setup (step by step)
+
+These steps assume you just cloned the repo and are new to running Python apps. Target: **Windows 10 / 11**, 64-bit.
+
+### 1. Install Python 3.10 or newer
+
+1. Download the Windows installer from [python.org](https://www.python.org/downloads/windows/).
+2. Run it, and **check "Add python.exe to PATH"** before you click Install.
+3. Close and reopen PowerShell, then confirm:
+
+```powershell
+python --version
+```
+
+You want `Python 3.10` or higher (for example `Python 3.12.3`). If PowerShell says `python` is not recognized, Python is not on PATH — reinstall and tick that checkbox, or log out and back in.
+
+### 2. RTL-SDR driver (Zadig) — once per PC
+
+If you already ran Zadig and the dongle works in another SDR program, **skip this**. You only need to do it once per computer.
+
+If you have not: plug in the dongle and follow [Zadig / WinUSB](#2-zadig--winusb-driver) below. Windows will not let FreqHopper talk to the stick until WinUSB is installed on **Bulk-In, Interface (Interface 0)**.
+
+### 3. Get librtlsdr DLLs (not ExtIO.dll)
+
+FreqHopper needs these files next to the project (or in `vendor\`):
+
+- `rtlsdr.dll`
+- `libusb-1.0.dll`
+- `pthreadVC2.dll` (only if your download includes it)
+
+**`ExtIO.dll` will not work.** Many SDR packages (HDSDR, SDR#, and similar) ship ExtIO plugins. Those are for *those* programs. FreqHopper does **not** load ExtIO.dll. If that is the only DLL you have, the app still cannot find librtlsdr — copy `rtlsdr.dll` and `libusb-1.0.dll` from a **librtlsdr**, **RTL-SDR Blog**, or **PothosSDR** package instead. See [librtlsdr DLLs](#3-librtlsdr-dlls) for download notes.
+
+Put `rtlsdr.dll` and `libusb-1.0.dll` in **one** of:
+
+- the cloned project root (same folder as `README.md` and `requirements.txt`), or
+- a `vendor\` folder inside the project
+
+### 4. Create a virtual environment, install, and run
+
+In PowerShell, `cd` into the cloned FreqHopper folder first (the one that contains `requirements.txt`):
+
+```powershell
+cd path\to\FreqHopper
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m freqhopper
+```
+
+If `Activate.ps1` is blocked, Windows is restricting scripts. This is common and safe to allow for your own user account:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Then run `.\.venv\Scripts\Activate.ps1` again. When it works, your prompt starts with `(.venv)`.
+
+You can also double-click `run_freqhopper.bat` after the install step.
+
+### 5. Try the UI without a dongle
+
+To confirm Python and the GUI are working even if the stick or DLLs are not ready:
+
+```powershell
+python -m freqhopper --demo
+```
+
+That starts **Simulation (no RTL-SDR hardware)** so you can click around, move the squelch slider, and see lock / unmute behavior with a fake signal.
+
+A sound output device is optional. If none is present, scanning and squelch still work; playback stays muted and the status line explains why.
+
 ## Windows prerequisites
 
-Target: **Windows 10 / 11**, 64-bit.
+The sections below are the same requirements in more detail.
 
 ### 1. RTL-SDR dongle
 
@@ -24,7 +109,7 @@ Any RTL2832U-based receiver (RTL-SDR Blog, NooElec NESDR, generic DVB-T sticks, 
 
 ### 2. Zadig / WinUSB driver
 
-Windows will not expose the stick to user-space SDR tools until the stock DVB-T driver is replaced.
+You only need this **once** per PC (until you reinstall Windows or change USB drivers). Windows will not expose the stick to user-space SDR tools until the stock DVB-T driver is replaced.
 
 1. Download [Zadig](https://zadig.akeo.ie/).
 2. Plug in the dongle.
@@ -38,7 +123,7 @@ If Zadig is skipped, FreqHopper will report that no RTL-SDR was found even thoug
 
 ### 3. librtlsdr DLLs
 
-Python’s `pyrtlsdr` bindings need the native library on Windows:
+Python’s `pyrtlsdr` bindings need the native **librtlsdr** library on Windows, not an ExtIO plugin:
 
 - `rtlsdr.dll`
 - `libusb-1.0.dll`
@@ -52,28 +137,28 @@ Copy those files into **one** of:
 
 You can also set `RTLSDR_PATH` to a folder that contains `rtlsdr.dll`.
 
-Prebuilt Windows binaries are commonly published with [librtlsdr releases](https://github.com/librtlsdr/librtlsdr/releases) and RTL-SDR Blog / osmocom packages. Installing [PothosSDR](https://github.com/pothosware/PothosSDR/wiki) and adding its `bin` directory to `PATH` is another working option.
+Prebuilt Windows binaries are commonly published with [librtlsdr releases](https://github.com/librtlsdr/librtlsdr/releases) and RTL-SDR Blog / osmocom packages. Installing [PothosSDR](https://github.com/pothosware/PothosSDR/wiki) and adding its `bin` directory to `PATH` is another working option — that `bin` folder is where `rtlsdr.dll` and `libusb-1.0.dll` usually live.
+
+**Do not paste `ExtIO.dll` into the project expecting FreqHopper to start working.** ExtIO is a different interface used by apps such as HDSDR and SDR#. FreqHopper never loads it.
 
 ### 4. Python
 
 Install **Python 3.10+** from [python.org](https://www.python.org/downloads/windows/). During setup, enable **Add python.exe to PATH**.
 
-A sound output device is optional. If none is present, scanning and squelch still work; playback stays muted and the status line explains why.
-
 ## Install
 
-In a Command Prompt or PowerShell session, from the project folder:
+In PowerShell, from the cloned project folder (after Python is on PATH):
 
-```bat
+```powershell
 python -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
 ## Run
 
-```bat
+```powershell
 python -m freqhopper
 ```
 
@@ -83,7 +168,7 @@ The first launch uses a **2 m amateur (US)** range preset (144–148 MHz, 15 kHz
 
 To exercise the UI without a dongle:
 
-```bat
+```powershell
 python -m freqhopper --demo
 ```
 
@@ -137,7 +222,7 @@ freqhopper/
   audio_player.py     Squelch-gated 48 kHz playback
   frequency.py        Frequency parsing
   gui/                PySide6 window, meter, theme
-vendor/               Drop rtlsdr.dll here on Windows
+vendor/               Drop rtlsdr.dll here on Windows (not ExtIO.dll)
 tests/                Hardware-free unit tests
 ```
 
@@ -153,7 +238,7 @@ NBFM uses a ~12.5 kHz channel filter, quadrature discriminator, and ~4 kHz audio
 
 ## Tests
 
-```bat
+```powershell
 pip install -r requirements-dev.txt
 python -m pytest -q
 ```
@@ -164,8 +249,12 @@ Tests use a simulated RTL-SDR. They do not require a dongle or audio device.
 
 | Symptom | What to try |
 | --- | --- |
+| Clone has no `freqhopper\` folder | You cloned before PR #1 landed on `main`. Run `git checkout main` then `git pull origin main`. |
+| `python` is not recognized | Reinstall Python from python.org and check **Add python.exe to PATH**. Close and reopen PowerShell. |
+| `Activate.ps1` cannot be loaded | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then activate again. |
 | “No RTL-SDR device was found” | Zadig WinUSB on Bulk-In Interface 0; close SDR#, HDSDR, dump1090; try another USB port. |
-| “Could not load librtlsdr” | Put `rtlsdr.dll` and `libusb-1.0.dll` in the project folder or `vendor\`. |
+| “Could not load librtlsdr” | You need `rtlsdr.dll` and `libusb-1.0.dll` in the project folder or `vendor\`. |
+| “Could not load librtlsdr” after dropping in ExtIO.dll | FreqHopper does **not** use ExtIO.dll (that file is for HDSDR/SDR#). Get `rtlsdr.dll` + `libusb-1.0.dll` from librtlsdr, PothosSDR, or an RTL-SDR Blog Windows package. |
 | Scan runs but no audio | Check Windows playback device / volume mixer. Status will mention a missing audio device. Detection still works. |
 | Constant open squelch | Raise the squelch slider, or switch from Auto gain to a fixed gain. |
 | Never opens squelch | Lower the slider, increase gain, confirm you are on an active band, wait for a transmission. |
